@@ -10,6 +10,7 @@ export class Article extends Model<InferAttributes<Article>, InferCreationAttrib
   declare title: CreationOptional<string | null>;
   declare link: CreationOptional<string | null>;
   declare description: CreationOptional<string | null>;
+  declare imageUrl: CreationOptional<string | null>;
   declare publishedAt: CreationOptional<Date | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
@@ -48,6 +49,11 @@ export function initArticleModel(sequelize: Sequelize): typeof Article {
       description: {
         type: DataTypes.TEXT,
         allowNull: true,
+      },
+      imageUrl: {
+        type: DataTypes.STRING(1024),
+        allowNull: true,
+        field: 'image_url',
       },
       publishedAt: {
         type: DataTypes.DATE,

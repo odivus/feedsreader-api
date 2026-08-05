@@ -8,6 +8,7 @@ export interface ParsedArticle {
   title: string | null;
   link: string | null;
   description: string | null;
+  imageUrl: string | null;
   publishedAt: Date | null;
 }
 
@@ -26,6 +27,11 @@ const parsePublishedAt = (item: Parser.Item): Date | null => {
   if (!raw) return null;
   const date = new Date(raw);
   return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const extractImageUrl = (item: Parser.Item): string | null => {
+  if (!item.enclosure?.url || !item.enclosure.type?.startsWith('image/')) return null;
+  return truncate(item.enclosure.url, 1024);
 };
 
 /**
@@ -47,6 +53,7 @@ const normalizeItem = (item: Parser.Item): ParsedArticle | null => {
     // better fit for "brief description" than raw `content`/`summary`,
     // which can contain full HTML markup.
     description: truncate(item.contentSnippet ?? item.summary, 5000),
+    imageUrl: extractImageUrl(item),
     publishedAt: parsePublishedAt(item),
   };
 };
