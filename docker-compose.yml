@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p${DB_ROOT_PASSWORD}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      target: production
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mysql
+    ports:
+      - '${PORT:-3000}:3000'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # Run pending migrations then start the server on every container start.
+    command: sh -c "npm run db:migrate && node dist/server.js"
+
+  worker:
+    build:
+      context: .
+      target: production
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mysql
+    depends_on:
+      mysql:
+        condition: service_healthy
+      # Wait for `api` too, not for a startup-order guarantee (both connect
+      # to mysql independently) but so migrations only ever run once, from
+      # the api container, instead of racing both containers to migrate on
+      # a fresh volume.
+      api:
+        condition: service_started
+    # No HTTP surface - just the periodic feed-refresh cron (see src/worker.ts).
+    command: node dist/worker.js
+
+volumes:
+  mysql_data:

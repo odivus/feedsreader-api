@@ -1,0 +1,44 @@
+services:
+  api:
+    build:
+      # Use the "builder" stage: it has devDependencies (ts-node-dev, eslint,
+      # typescript, etc.) which the "production" stage deliberately drops.
+      target: builder
+    # Explicit shared tag: since "worker" below declares the exact same
+    # image name, Compose builds the builder stage once (for whichever
+    # service it processes first) and reuses that image for the other,
+    # instead of building the same stage twice.
+    image: rss-api:builder-dev
+    # Keep the container alive instead of running the production start
+    # command from docker-compose.yml; VS Code attaches to it.
+    command: sleep infinity
+    volumes:
+      # Mount the project into the container for live editing.
+      # Docker Compose resolves relative host paths against the "project
+      # directory" — the directory of the FIRST -f file passed to
+      # `docker compose` (here: docker-compose.yml, i.e. the workspace
+      # root) — not against this file's own location. So "." is correct.
+      - .:/app:cached
+      # Anonymous volume so the container's own node_modules (built with
+      # native bindings for bcrypt, etc.) isn't shadowed by the bind mount
+      # above (host node_modules may not exist or may be for the wrong OS/arch).
+      - /app/node_modules
+    # Not strictly required (Dev Containers can access the service by name
+    # without publishing to the host), but handy if you want to hit the API
+    # directly from the host too.
+    ports:
+      - '${PORT:-3000}:3000'
+
+  worker:
+    build:
+      target: builder
+    image: rss-api:builder-dev
+    # Same idea as "api": don't auto-run the feed-refresh cron
+    # (src/worker.ts) - stay idle so you can start/restart it by hand from
+    # a terminal attached to this container, with live-reload via
+    # `npm run worker` (ts-node-dev), and set breakpoints if needed.
+    command: sleep infinity
+    volumes:
+      - .:/app:cached
+      - /app/node_modules
+    # No ports - the worker has no HTTP surface, nothing to forward.

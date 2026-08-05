@@ -1,0 +1,42 @@
+{
+  "name": "rss-api",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.extend.yml"],
+  "service": "api",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "API" }
+  },
+
+  // Make sure node_modules matches package.json (native bcrypt bindings etc.)
+  // and that eslint/typescript language servers have what they need.
+  "postCreateCommand": "npm install",
+
+  // Builder stage in the Dockerfile doesn't switch to the "node" user, so
+  // the container runs as root — simplest for bind-mount/volume permissions.
+  "remoteUser": "root",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-mysql",
+        "eamodio.gitlens",
+        "christian-kohler.npm-intellisense"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "typescript.tsdk": "node_modules/typescript/lib"
+      }
+    }
+  }
+}
