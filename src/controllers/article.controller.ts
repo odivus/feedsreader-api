@@ -7,7 +7,7 @@ import { User } from '../models/User';
 const currentUserId = (req: Request): number => (req.user as User).id;
 
 export const getArticleFeed = catchAsync(async (req: Request, res: Response) => {
-  const { cursor, limit } = req.query as unknown as GetArticleFeedQuery;
-  const result = await getPersonalizedArticleFeed({ userId: currentUserId(req), limit, cursor });
+  const { cursor, limit, feedId } = req.query as unknown as GetArticleFeedQuery;
+  const result = await getPersonalizedArticleFeed({ userId: currentUserId(req), limit, cursor, feedId });
   res.status(200).json(result);
 });

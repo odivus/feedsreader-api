@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { Article } from '../models/Article';
+import { Feed } from '../models/Feed';
 import { ApiError } from '../utils/ApiError';
 import { decodeCursor, encodeCursor, FeedCursor } from '../utils/cursor';
 
@@ -7,6 +8,7 @@ export interface GetArticleFeedInput {
   userId: number;
   limit: number;
   cursor?: string;
+  feedId?: number;
 }
 
 export interface GetArticleFeedResult {
@@ -20,6 +22,7 @@ export const getPersonalizedArticleFeed = async ({
   userId,
   limit,
   cursor,
+  feedId,
 }: GetArticleFeedInput): Promise<GetArticleFeedResult> => {
   const boundedLimit = Math.min(limit, MAX_LIMIT);
 
@@ -28,6 +31,13 @@ export const getPersonalizedArticleFeed = async ({
     cursorValue = decodeCursor(cursor);
     if (!cursorValue) {
       throw ApiError.badRequest('Invalid cursor');
+    }
+  }
+
+  if (feedId !== undefined) {
+    const feed = await Feed.findOne({ where: { id: feedId, userId } });
+    if (!feed) {
+      throw ApiError.notFound('Feed not found');
     }
   }
 
@@ -45,6 +55,7 @@ export const getPersonalizedArticleFeed = async ({
         // Articles with no known publish date don't fit a "sorted by
         // freshness" feed - deliberately excluded here.
         { publishedAt: { [Op.ne]: null } },
+        feedId !== undefined ? { feedId } : {},
         cursorValue
           ? {
             [Op.or]: [

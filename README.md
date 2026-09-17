@@ -1,10 +1,15 @@
-# RSS API
+# Проект
 
-REST API-заготовка на Node.js/Express/TypeScript с:
+REST API для работы с rss-фидами на Node.js/Express/TypeScript
+Позволяет зарегестрированному пользователю добавлять, редактировать, удалять и получать rss-фиды.
 
-- регистрацией и входом (по username **или** email) через **Passport Local**;
-- входом через **Google** и **GitHub** OAuth 2.0;
-- аутентификацией на **JWT access-токенах** (короткоживущие) + **refresh-токенами**
+Код написан с помощью AI Claude. Разработка велась полностью в докер-конейнере. Код рабочий, проведено ручное тестирование.
+
+## Возможности API
+
+- Регистрация и вход пользователя (по username **или** email) через **Passport Local**;
+- Вход через **Google** и **GitHub** OAuth 2.0;
+- Аутентификация на **JWT access-токенах** (короткоживущие) + **refresh-токенами**
   (хранятся хешированными в MySQL, поддерживают отзыв — полноценный logout);
 - CRUD для RSS-ссылок пользователя (`/api/feeds`) — основная доменная сущность,
   которую предполагается расширять дальше (парсинг, обновление статей и т.д.).
@@ -72,17 +77,17 @@ npm run dev
 
 ### Аутентификация — `/api/auth`
 
-| Метод | Путь                  | Описание                                                        | Требует токен |
-|-------|-----------------------|-------------------------------------------------------------------|:---:|
-| POST  | `/register`           | Регистрация (`username`, `email`, `password`)                    | — |
-| POST  | `/login`              | Вход (`login` — username или email, `password`)                  | — |
-| GET   | `/google`             | Редирект на Google OAuth                                          | — |
-| GET   | `/google/callback`    | Callback Google → редирект на `CLIENT_URL/oauth/callback?accessToken=...` | — |
-| GET   | `/github`             | Редирект на GitHub OAuth                                          | — |
-| GET   | `/github/callback`    | Callback GitHub → редирект на `CLIENT_URL/oauth/callback?accessToken=...` | — |
-| POST  | `/refresh`            | Обновление пары токенов по refresh-cookie (с ротацией)            | refresh-cookie |
-| POST  | `/logout`             | Отзыв refresh-токена, очистка cookie                              | refresh-cookie |
-| GET   | `/me`                 | Текущий пользователь                                              | ✅ |
+| Метод | Путь               | Описание                                                                  | Требует токен  |
+| ----- | ------------------ | ------------------------------------------------------------------------- | :------------: |
+| POST  | `/register`        | Регистрация (`username`, `email`, `password`)                             |       —        |
+| POST  | `/login`           | Вход (`login` — username или email, `password`)                           |       —        |
+| GET   | `/google`          | Редирект на Google OAuth                                                  |       —        |
+| GET   | `/google/callback` | Callback Google → редирект на `CLIENT_URL/oauth/callback?accessToken=...` |       —        |
+| GET   | `/github`          | Редирект на GitHub OAuth                                                  |       —        |
+| GET   | `/github/callback` | Callback GitHub → редирект на `CLIENT_URL/oauth/callback?accessToken=...` |       —        |
+| POST  | `/refresh`         | Обновление пары токенов по refresh-cookie (с ротацией)                    | refresh-cookie |
+| POST  | `/logout`          | Отзыв refresh-токена, очистка cookie                                      | refresh-cookie |
+| GET   | `/me`              | Текущий пользователь                                                      |       ✅       |
 
 **Access-токен** возвращается в теле JSON-ответа — хранить на клиенте в памяти (не в
 localStorage, чтобы снизить риск XSS) и передавать в заголовке `Authorization: Bearer <token>`.
@@ -93,13 +98,13 @@ localStorage, чтобы снизить риск XSS) и передавать в
 
 ### RSS-ссылки — `/api/feeds` (везде нужен `Authorization: Bearer <accessToken>`)
 
-| Метод  | Путь         | Описание                          |
-|--------|--------------|------------------------------------|
-| GET    | `/`          | Список фидов текущего пользователя |
-| POST   | `/`          | Добавить фид (`url`, `title?`, `description?`) |
-| GET    | `/:id`       | Получить один фид                  |
-| PATCH  | `/:id`       | Частично обновить фид               |
-| DELETE | `/:id`       | Удалить фид                         |
+| Метод  | Путь   | Описание                                       |
+| ------ | ------ | ---------------------------------------------- |
+| GET    | `/`    | Список фидов текущего пользователя             |
+| POST   | `/`    | Добавить фид (`url`, `title?`, `description?`) |
+| GET    | `/:id` | Получить один фид                              |
+| PATCH  | `/:id` | Частично обновить фид                          |
+| DELETE | `/:id` | Удалить фид                                    |
 
 Фиды всегда скоупятся по `userId` на уровне сервиса — пользователь физически не может
 получить/изменить/удалить чужой фид, даже подобрав `id`.
